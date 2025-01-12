@@ -2,10 +2,6 @@
 /dist
 /node_modules
 /build
-.env
-node_modules
-/postgres
-postgres
 
 # Logs
 logs
