@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Inject, ParseIntPipe, ParseUUIDPipe, Query, Patch } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { ORDERS_SERVICES } from 'config';
+import { NATS_SERVICES } from 'config';
 import { firstValueFrom } from 'rxjs';
 import { OrderPaginationDto, StatusDto } from './dto';
 
@@ -9,17 +9,17 @@ import { OrderPaginationDto, StatusDto } from './dto';
 export class OrdersController {
 
   constructor(
-    @Inject(ORDERS_SERVICES) private readonly ordersClient: ClientProxy
+    @Inject(NATS_SERVICES) private readonly client: ClientProxy
   ) {}
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto) {
-    return this.ordersClient.send('createOrder', createOrderDto);
+    return this.client.send('createOrder', createOrderDto);
   }
 
   @Get()
   findAll(@Query() orderPaginationDto: OrderPaginationDto) {
-    return this.ordersClient.send('findAllOrders', orderPaginationDto);
+    return this.client.send('findAllOrders', orderPaginationDto);
   }
 
   @Get('id/:id')
@@ -29,7 +29,7 @@ export class OrdersController {
     // );
 
     try {
-      const order = await firstValueFrom(this.ordersClient.send('findOneOrder', {id}));
+      const order = await firstValueFrom(this.client.send('findOneOrder', {id}));
       return order;
     } catch (error) {
       throw new RpcException(error);
@@ -40,7 +40,7 @@ export class OrdersController {
   @Get(':status')
   async findAllByStatus(@Param() statusDto: StatusDto, @Query() orderPaginationDto: OrderPaginationDto) {
     try {
-      const order = await firstValueFrom(this.ordersClient.send('findAllOrders', {...orderPaginationDto, ...statusDto}));
+      const order = await firstValueFrom(this.client.send('findAllOrders', {...orderPaginationDto, ...statusDto}));
       return order; 
     } catch (error) {
       throw new RpcException(error);
@@ -51,7 +51,7 @@ export class OrdersController {
   async updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body() statusDto: StatusDto) {
     try {
       
-      const order = await firstValueFrom(this.ordersClient.send('changeOrderStatus', {id, ...statusDto}));
+      const order = await firstValueFrom(this.client.send('changeOrderStatus', {id, ...statusDto}));
       return order; 
     } catch (error) {
       throw new RpcException(error);
